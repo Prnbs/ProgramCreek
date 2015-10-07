@@ -14,7 +14,7 @@ def findMedian(arr1, arr1_start, arr1_end, arr2, arr2_start, arr2_end):
     if median1 == median2:
         print median1
     if arr1_remaining <= 2 and arr2_remaining <= 2:
-        print (median1 + median2)/2
+        print "Averaged", (median1 + median2)/2
         return
     if median1 > median2:
         # for arr1 new start and stop are
