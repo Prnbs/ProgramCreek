@@ -48,6 +48,7 @@ class Trie:
         # store the partial word found till now
         str_partial_word += curr_node.children[index].alphabet
         curr_node = curr_node.children[index]
+        # if the full prefix itself contains a valid word
         if curr_node.leaf and len(prefix) <= 1:
             l_words_found.append(str_partial_word)
         return self.find_all_words(prefix[1:], curr_node, l_words_found, str_partial_word)
@@ -58,6 +59,6 @@ if __name__ == '__main__':
     lines = [line.rstrip('\n') for line in open('wordsEn.txt')]
     for word in lines:
         trie.add_word(word)
-    str_prefix = "elect"
+    str_prefix = "blacksm"
     l_all_words = trie.find_all_words(str_prefix, trie.root, [], "")
     print l_all_words
