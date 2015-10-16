@@ -11,7 +11,7 @@ class RBNode:
         self.self_location = direction
 
     def __str__(self):
-        return str(self.data) + self.colour + "  P:" + str(self.parent) + "  L:" + str(self.self_location)
+        return str(self.data) + self.colour# + "  P:" + str(self.parent) + "  L:" + str(self.self_location)
 
     __repr__ = __str__
 
@@ -42,68 +42,81 @@ class RBTree:
         parent = curr_node.parent
         if parent.parent is not None:
             grand_parent = parent.parent
-            root_changed = False
-            if grand_parent.self_location is -1:
-                # grand parent is root
-                if grand_parent.children[1] is not None and \
+
+            if grand_parent.children[1] is not None and \
                                 grand_parent.children[1] == parent and \
                                 parent.self_location == curr_node.self_location:
-                    # all in a line so root will change
+                # all in a line
+                if grand_parent.self_location is -1:
+                    # grand parent is root
                     self.root = parent
-                    parent.parent = grand_parent.parent
-                    grand_parent.children[1] = parent.children[0]
-                    parent.children[0] = grand_parent
-                    grand_parent.parent = parent
-                    grand_parent.self_location = False
-                    # swap colours
-                    parent.colour, grand_parent.colour = grand_parent.colour, parent.colour
-                    return parent, curr_node
+                    parent.self_location = -1
+                else:
+                    # not root, but they are in line
+                    if grand_parent.parent is not None:
+                        grand_parent.parent.children[grand_parent.self_location] = parent
+                parent.parent = grand_parent.parent
+                grand_parent.children[1] = parent.children[0]
+                if parent.children[0] is not None:
+                    parent.children[0].parent = grand_parent
+                parent.children[0] = grand_parent
+                grand_parent.parent = parent
+                grand_parent.self_location = False
+                # swap colours
+                parent.colour, grand_parent.colour = grand_parent.colour, parent.colour
+                return parent, curr_node
             else:
-                # no root, but are they in line
-                if grand_parent.self_location == parent.self_location and \
-                                parent.self_location == curr_node.self_location:
-                    grand_parent.parent.children[grand_parent.self_location] = parent
-                    parent.parent = grand_parent.parent
-                    grand_parent.children[1] = parent.children[0]
-                    parent.children[0] = grand_parent
-                    grand_parent.parent = parent
-                    grand_parent.self_location = False
-                    # swap colours
-                    parent.colour, grand_parent.colour = grand_parent.colour, parent.colour
-                    return parent, curr_node
-
-            # Not in line
-            grand_parent.children[curr_node.parent.self_location] = curr_node
-            curr_node.self_location = parent.self_location
-            curr_node.parent = grand_parent
-            if curr_node.children[0] is not None:
-                curr_node.children[0].parent = parent
-            curr_node.children[0] = parent
-            parent.children[1] = curr_node.children[0]
-            parent.parent = curr_node
-
-            return parent, curr_node
-
+                # Not in line
+                grand_parent.children[curr_node.parent.self_location] = curr_node
+                curr_node.self_location = parent.self_location
+                curr_node.parent = grand_parent
+                if curr_node.children[0] is not None:
+                    curr_node.children[0].parent = parent
+                    parent.children[0].self_location = not parent.children[1].self_location
+                curr_node.children[0] = parent
+                parent.children[1] = curr_node.children[0]
+                parent.parent = curr_node
+                return parent, curr_node
 
     def rotate_right(self, curr_node):
         parent = curr_node.parent
         if parent.parent is not None:
             grand_parent = parent.parent
-            if grand_parent.self_location is -1:
-                parent.self_location = -1
-                self.root = parent
-            # swap colours
-            parent.colour, grand_parent.colour = grand_parent.colour, parent.colour
-            grand_parent.children[0] = parent.children[1]
-            parent.children[1] = grand_parent
-            # now invert self_locations of the above
-            if grand_parent.children[0] is not None:
-                grand_parent.children[0].self_location = not grand_parent.children[0].self_location
-            if parent.children[1] is not None:
-                parent.children[1].self_location = not parent.children[1].self_location
 
-            parent.self_location, grand_parent.self_location = grand_parent.self_location, parent.self_location
-        return parent, curr_node
+            if grand_parent.children[0] is not None and \
+                                grand_parent.children[0] == parent and \
+                                parent.self_location == curr_node.self_location:
+                # all in a line
+                if grand_parent.self_location is -1:
+                    # grand parent is root
+                    self.root = parent
+                    parent.self_location = -1
+                else:
+                    # not root, but they are in line
+                    if grand_parent.parent is not None:
+                        grand_parent.parent.children[grand_parent.self_location] = parent
+                parent.parent = grand_parent.parent
+                grand_parent.children[0] = parent.children[1]
+                if parent.children[1] is not None:
+                    parent.children[1].parent = grand_parent
+                    parent.children[1].self_location = not parent.children[1].self_location
+                parent.children[1] = grand_parent
+                grand_parent.parent = parent
+                grand_parent.self_location = True
+                # swap colours
+                parent.colour, grand_parent.colour = grand_parent.colour, parent.colour
+                return parent, curr_node
+            else:
+                # Not in line
+                grand_parent.children[curr_node.parent.self_location] = curr_node
+                curr_node.self_location = parent.self_location
+                curr_node.parent = grand_parent
+                if curr_node.children[1] is not None:
+                    curr_node.children[1].parent = parent
+                curr_node.children[1] = parent
+                parent.children[0] = curr_node.children[1]
+                parent.parent = curr_node
+                return parent, curr_node
 
     def insert(self, item, curr_node):
         inserted_at, direction = self.insert_as_bst(item, curr_node)
@@ -145,20 +158,17 @@ class RBTree:
                             inserted_at, somm = self.rotate_right(inserted_at)
                         continue
 
-                inserted_at = parent.parent
-                node = None
-                node_parent = None
-                if inserted_at.parent is not None and (inserted_at.colour is "R" and inserted_at.parent.colour is "R"):
-                    # change inserted_at to parent
-                    node, node_parent = self.rotate_left(inserted_at)
-                if node is not None and node.colour is "R" and node_parent.colour is "R":
-                    if node.self_location is False and node_parent.self_location is False:
-                        # right rotate
-                        self.rotate_right(node_parent)
-                    # elif node.self_location is True and node_parent.self_location is True:
-                    #     self.rotate_left(inserted_at)
-                else:
-                    break
+                # if inserted_at.parent is not None and (inserted_at.colour is "R" and inserted_at.parent.colour is "R"):
+                #     # change inserted_at to parent
+                #     node, node_parent = self.rotate_left(inserted_at)
+                # if node is not None and node.colour is "R" and node_parent.colour is "R":
+                #     if node.self_location is False and node_parent.self_location is False:
+                #         # right rotate
+                #         self.rotate_right(node_parent)
+                #     # elif node.self_location is True and node_parent.self_location is True:
+                #     #     self.rotate_left(inserted_at)
+                # else:
+                #     break
             else:
                 break
         self.root.colour = "B"
@@ -171,11 +181,20 @@ if __name__ == '__main__':
     # rbTree.insert(40, rbTree.root)
     # rbTree.insert(50, rbTree.root)
     # rbTree.insert(60, rbTree.root)
+    # rbTree.insert(80, rbTree.root)
+    # rbTree.insert(90, rbTree.root)
+    # rbTree.insert(100, rbTree.root)
 
-    rbTree.insert(10, rbTree.root)
-    rbTree.insert(5, rbTree.root)
-    rbTree.insert(6, rbTree.root)
 
+    rbTree.insert(100, rbTree.root)
+    rbTree.insert(90, rbTree.root)
+    rbTree.insert(80, rbTree.root)
+    rbTree.insert(70, rbTree.root)
+    rbTree.insert(60, rbTree.root)
+    rbTree.insert(50, rbTree.root)
+    rbTree.insert(40, rbTree.root)
+    rbTree.insert(30, rbTree.root)
+    # rbTree.insert(10, rbTree.root)
     # list_of_items = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     #
     # for data in list_of_items:
