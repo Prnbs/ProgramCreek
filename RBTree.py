@@ -13,6 +13,12 @@ class RBNode:
     def __str__(self):
         return str(self.data) + self.colour
 
+    # # will assign thisNode's location to old root
+    # def set_as_root(self, thisNode):
+    #     self.root.self_location = thisNode.self_location
+    #     self.root
+
+
     __repr__ = __str__
 
 
@@ -24,7 +30,7 @@ class RBTree:
         inserted = False
         direction = 0
         if curr_node is not None:
-            direction = (curr_node.data < item)
+            direction = (curr_node.data <= item)
             if curr_node.children[direction] is None:
                 curr_node.children[direction] = RBNode(item, "R", parent=curr_node, direction=direction)
                 inserted = True
@@ -38,7 +44,54 @@ class RBTree:
         if inserted:
             return curr_node.children[direction], direction
 
-    def rotate(self, curr_node, left=True):
+    def rotate_left(self, curr_node):
+        left = False
+        right = True
+        parent = curr_node.parent
+        if parent.parent is not None:
+            grand_parent = parent.parent
+
+            if grand_parent.children[right] is not None and \
+                                grand_parent.children[right] == parent and \
+                                parent.self_location == curr_node.self_location:
+                # all in a line
+                if grand_parent.self_location is -1:
+                    # grand parent is root
+                    self.root = parent
+                    parent.self_location = -1
+                else:
+                    # not root, but they are in line
+                    if grand_parent.parent is not None:
+                        grand_parent.parent.children[grand_parent.self_location] = parent
+                parent.parent = grand_parent.parent
+                grand_parent.children[right] = parent.children[left]
+                if parent.children[left] is not None:
+                    parent.children[left].parent = grand_parent
+                parent.children[left] = grand_parent
+                grand_parent.parent = parent
+                grand_parent.self_location = left
+                # swap colours
+                parent.colour, grand_parent.colour = grand_parent.colour, parent.colour
+                return parent
+            else:
+                # Not in line
+                # first swap parent and curr_node
+                parent.children[right] = curr_node.children[left]
+                if curr_node.children[left] is not None:
+                    curr_node.children[left].parent = parent
+                    curr_node.children[left].self_location = not curr_node.children[left].self_location
+                # now swap curr node and parent
+                grand_parent.children[parent.self_location] = curr_node
+                curr_node.self_location = parent.self_location
+                curr_node.parent = grand_parent
+
+                curr_node.children[left] = parent
+                parent.parent = curr_node
+                return parent
+
+    def rotate_right(self, curr_node):
+        left = False
+        right = True
         parent = curr_node.parent
         if parent.parent is not None:
             grand_parent = parent.parent
@@ -56,25 +109,28 @@ class RBTree:
                     if grand_parent.parent is not None:
                         grand_parent.parent.children[grand_parent.self_location] = parent
                 parent.parent = grand_parent.parent
-                grand_parent.children[left] = parent.children[not left]
-                if parent.children[not left] is not None:
-                    parent.children[not left].parent = grand_parent
-                parent.children[not left] = grand_parent
+                grand_parent.children[left] = parent.children[right]
+                if parent.children[right] is not None:
+                    parent.children[right].parent = grand_parent
+                parent.children[right] = grand_parent
                 grand_parent.parent = parent
-                grand_parent.self_location = not left
+                grand_parent.self_location = right
                 # swap colours
                 parent.colour, grand_parent.colour = grand_parent.colour, parent.colour
                 return parent
             else:
                 # Not in line
-                grand_parent.children[curr_node.parent.self_location] = curr_node
+                # first swap parent and curr_node
+                parent.children[right] = curr_node.children[left]
+                if curr_node.children[left] is not None:
+                    curr_node.children[left].parent = parent
+                    curr_node.children[left].self_location = not curr_node.children[left].self_location
+                # now swap curr node and parent
+                grand_parent.children[parent.self_location] = curr_node
                 curr_node.self_location = parent.self_location
                 curr_node.parent = grand_parent
-                if curr_node.children[not left] is not None:
-                    curr_node.children[not left].parent = parent
-                    parent.children[not left].self_location = not parent.children[left].self_location
-                parent.children[left] = curr_node.children[not left]
-                curr_node.children[not left] = parent
+
+                curr_node.children[left] = parent
                 parent.parent = curr_node
                 return parent
 
@@ -106,16 +162,16 @@ class RBTree:
                     if parent.self_location == inserted_at.self_location:
                         # if left most
                         if not parent.self_location:
-                            inserted_at = self.rotate(inserted_at, left=False)
+                            inserted_at = self.rotate_right(inserted_at)
                         else:
-                            inserted_at = self.rotate(inserted_at, left=True)
+                            inserted_at = self.rotate_left(inserted_at)
                         continue
                     else:
                         # parent is right child, inserted_at is left child
                         if not parent.self_location:
-                            inserted_at = self.rotate(inserted_at, left=True)
+                            inserted_at = self.rotate_left(inserted_at)
                         else:
-                            inserted_at = self.rotate(inserted_at, left=False)
+                            inserted_at = self.rotate_right(inserted_at)
                         continue
             else:
                 break
@@ -143,7 +199,7 @@ if __name__ == '__main__':
     # rbTree.insert(40, rbTree.root)
     # rbTree.insert(30, rbTree.root)
     # rbTree.insert(10, rbTree.root)
-    list_of_items = [50, 1, 2, 3, 4, -4, 10, 5, 6, 7, 8, 9]
+    list_of_items = [50, 10, 20, 5, 3, -4, 10, 5, 6, 7, 8, 9, 34, 76, 58, 92, -12, -19, 1000,700, 900,800]
 
     for data in list_of_items:
         rbTree.insert(data, rbTree.root)
