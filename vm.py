@@ -1,4 +1,14 @@
 import dis
+import operator
+
+COMPARISION = [
+    operator.lt,
+    operator.le,
+    operator.eq,
+    operator.ne,
+    operator.gt,
+    operator.ge
+]
 
 class Globals:
     def __init__(self):
@@ -44,7 +54,9 @@ class PyByteVM:
         tos1 = self.stack.pop()
         self.stack.append(tos + tos1)
 
+
      # Implements TOS = TOS1 - TOS.
+
     def invoke_BINARY_SUBTRACT(self):
         tos = self.stack.pop()
         tos1 = self.stack.pop()
@@ -97,6 +109,13 @@ class PyByteVM:
     def invoke_RETURN_VALUE(self):
         return self.stack.pop()
 
+    def invoke_POP_JUMP_IF_FALSE(self, val):
+        if not self.stack.pop():
+            self.ip = val
+
+    def invoke_JUMP_FORWARD(self,val):
+        self.ip += val
+
     # Pushes a new function object on the stack. TOS is the code associated with the function.
     # The function object is defined to have argc default parameters, which are found below TOS.
     def invoke_MAKE_FUNCTION(self, val):
@@ -116,6 +135,11 @@ class PyByteVM:
             setattr(func_vm,func_vm.varnames[func_vm.argcount-1-i], item)
         self.stack.append(func_vm)
 
+    def invoke_COMPARE_OP(self, val):
+        b = self.stack.pop()
+        a = self.stack.pop()
+        self.stack.append(COMPARISION[val](a,b))
+
 
     def invoke_LOAD_FAST(self, val):
         self.stack.append(getattr(self, self.varnames[val]))
@@ -123,6 +147,22 @@ class PyByteVM:
     def invoke_STORE_FAST(self, val):
         setattr(self, self.varnames[val], self.stack.pop())
 
+    def invoke_SETUP_LOOP(self, val):
+        pass
+
+    def invoke_JUMP_ABSOLUTE(self, val):
+        self.ip = val
+
+    def invoke_POP_BLOCK(self):
+        pass
+
+    def invoke_INPLACE_ADD(self):
+        # self.stack[-1] = self.stack[-2] + self.stack[-1]
+        self.invoke_BINARY_ADD()
+
+    def invoke_INPLACE_SUBTRACT(self):
+        # self.stack[-1] = self.stack[-2] - self.stack[-1]
+        self.invoke_BINARY_SUBTRACT()
 
     def execute(self):
         while True:
