@@ -1,8 +1,11 @@
 import dis
 
+class Globals:
+    def __init__(self):
+        self.name = "Global"
 
 class PyByteVM:
-    def __init__(self, module):
+    def __init__(self, module, globals_object):
         self.constants = module.co_consts
         self.names = module.co_names
         self.program = module.co_code
@@ -11,17 +14,14 @@ class PyByteVM:
         self.varnames = module.co_varnames
         self.argcount = module.co_argcount
         self.stack = []
-
-    def append_default_params(self, list_def_params):
-        # TODO might need to reverse list_def_params
-        self.stack.extend(list_def_params)
+        self.globals = globals_object
 
     # Pushes co_consts[consti] onto the stack.
     def invoke_LOAD_CONST(self, val):
         self.stack.append(self.constants[val])
 
     def invoke_LOAD_GLOBAL(self, val):
-        self.stack.append(getattr(self, self.names[val]))
+        self.stack.append(getattr(self.globals, self.names[val]))
 
 
     # Implements name = TOS. namei is the index of name in the attribute co_names of the code object.
@@ -30,6 +30,8 @@ class PyByteVM:
         tos = self.stack.pop()
         var_name = self.names[val]
         setattr(self, var_name, tos)
+        # store in globals too
+        setattr(self.globals, var_name, tos)
 
     # Pushes the value associated with co_names[namei] onto the stack.
     def invoke_LOAD_NAME(self, val):
@@ -41,6 +43,12 @@ class PyByteVM:
         tos = self.stack.pop()
         tos1 = self.stack.pop()
         self.stack.append(tos + tos1)
+
+     # Implements TOS = TOS1 - TOS.
+    def invoke_BINARY_SUBTRACT(self):
+        tos = self.stack.pop()
+        tos1 = self.stack.pop()
+        self.stack.append(tos1 - tos)
 
     def print_bytecode(self, code, name):
         print("-"* 60)
@@ -95,13 +103,15 @@ class PyByteVM:
         func_name = self.stack.pop()
         func_code = self.stack.pop()
         def_params = []
+        # fetch the default params
         while val > 0:
             def_params.append(self.stack.pop())
             val -= 1
         self.print_bytecode(func_code, func_name)
 
         def_params.reverse()
-        func_vm = PyByteVM(func_code)
+        func_vm = PyByteVM(func_code, self.globals)
+        # set the default params inside the function object
         for i, item in enumerate(def_params):
             setattr(func_vm,func_vm.varnames[func_vm.argcount-1-i], item)
         self.stack.append(func_vm)
@@ -138,6 +148,7 @@ if __name__ == '__main__':
        for line in f:
            source += line
     t = compile(source, input_file_name, 'exec')
-    pyByte = PyByteVM(t)
+    globals_object = Globals()
+    pyByte = PyByteVM(t, globals_object)
     pyByte.print_bytecode(t, "Main")
     pyByte.execute()
