@@ -24,10 +24,9 @@ class PyByteVM:
             self.ip = 0
             self.varnames = module.co_varnames
             self.argcount = module.co_argcount
-            self.stack = []
             self.globals = globals_object
             self.parent = None
-        else:
+        else: # object created for loops
             self.constants = parent.constants
             self.names = parent.names
             self.program = parent.program
@@ -35,11 +34,15 @@ class PyByteVM:
             self.ip = parent.ip
             self.varnames = parent.varnames
             self.argcount = parent.argcount
-            self.stack = []
             self.globals = parent.globals
             self.parent = parent
+        self.module = module
+        self.stack = []
         self.context = None
+        # stores the execution frame in which a variable is declared
         self.var_contexts = {}
+        # stores the default arguments when a function is made
+        self.func_def_args = {}
 
     # Pushes co_consts[consti] onto the stack.
     def invoke_LOAD_CONST(self, val):
@@ -48,12 +51,15 @@ class PyByteVM:
     def invoke_LOAD_GLOBAL(self, val):
         self.stack.append(self.get_from_exec_frame(self.globals, self.names[val]))
 
-    def set_in_exec_frame(self, context, var_name, var_value):
+    def set_in_exec_frame(self, context, var_name, var_value, func_call=False):
         # self.context contains the context that get_from_exec_frame() found the attribute in
-        if var_name not in self.var_contexts:
-            setattr(context, var_name, var_value)
+        if not func_call:
+            if var_name not in self.var_contexts:
+                setattr(context, var_name, var_value)
+            else:
+                setattr(self.var_contexts[var_name], var_name, var_value)
         else:
-            setattr(self.var_contexts[var_name], var_name, var_value)
+            setattr(context, var_name, var_value)
 
     # if attribute can't be found in current context recurse up to it's parent context
     def get_from_exec_frame(self, context, var_name):
@@ -98,6 +104,12 @@ class PyByteVM:
         tos1 = self.stack.pop()
         self.stack.append(tos1 - tos)
 
+     # Implements TOS = TOS1 * TOS.
+    def invoke_BINARY_MULTIPLY(self):
+        tos = self.stack.pop()
+        tos1 = self.stack.pop()
+        self.stack.append(tos1 * tos)
+
     def print_bytecode(self, code, name):
         print("-"* 60)
         print(" "*26 + name)
@@ -129,15 +141,19 @@ class PyByteVM:
         for i in range(num_posn_args):
             posn_args.append(self.stack.pop())
         posn_args.reverse()
-        # Below the parameters, the function object to call is on the stack
-        func_code = self.stack.pop()
-
+        # Below the parameters, the template function object which will be used to create a new function object
+        func_template = self.stack.pop()
+        # the actual function object that will be invoked
+        func_code = PyByteVM(func_template.module, func_template.globals)
+        #  copy the default params from the template
+        for key in func_template.func_def_args:
+            func_code.set_in_exec_frame(func_code, key, func_template.func_def_args[key])
         # set the keyword pairs
         for key in keyw_args:
-            self.set_in_exec_frame(func_code, key, keyw_args[key])
+            self.set_in_exec_frame(func_code, key, keyw_args[key], func_call=True)
         # set the positional args
         for i, item in enumerate(posn_args):
-            self.set_in_exec_frame(func_code,func_code.varnames[i], item)
+            self.set_in_exec_frame(func_code,func_code.varnames[i], item, func_call=True)
         # pushes the return value
         self.stack.append(func_code.execute())
 
@@ -164,12 +180,13 @@ class PyByteVM:
             val -= 1
         self.print_bytecode(func_code, func_name)
 
-        # def_params.reverse()
-        func_vm = PyByteVM(module=func_code, globals_object=self.globals)
+        # This function object won't actually get invoked, it exists to store the default args
+        func_vm_template = PyByteVM(module=func_code, globals_object=self.globals)
         # set the default params inside the function object
         for i, item in enumerate(def_params):
-            self.set_in_exec_frame(func_vm,func_vm.varnames[func_vm.argcount-1-i], item)
-        self.stack.append(func_vm)
+            func_vm_template.func_def_args[func_vm_template.varnames[func_vm_template.argcount-1-i]] = item
+            # self.set_in_exec_frame(func_vm,func_vm.varnames[func_vm.argcount-1-i], item)
+        self.stack.append(func_vm_template)
 
     def invoke_COMPARE_OP(self, val):
         b = self.stack.pop()
