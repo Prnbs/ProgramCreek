@@ -51,7 +51,7 @@ class PyByteVM:
     def set_in_exec_frame(self, context, var_name, var_value):
         # self.context contains the context that get_from_exec_frame() found the attribute in
         if var_name not in self.var_contexts:
-            setattr(self, var_name, var_value)
+            setattr(context, var_name, var_value)
         else:
             setattr(self.var_contexts[var_name], var_name, var_value)
 
@@ -164,7 +164,7 @@ class PyByteVM:
             val -= 1
         self.print_bytecode(func_code, func_name)
 
-        def_params.reverse()
+        # def_params.reverse()
         func_vm = PyByteVM(module=func_code, globals_object=self.globals)
         # set the default params inside the function object
         for i, item in enumerate(def_params):
