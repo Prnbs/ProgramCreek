@@ -10,9 +10,15 @@ COMPARISION = [
     operator.ge
 ]
 
+BUILTINS = {
+    "print" : print
+}
+
+
 class Globals:
     def __init__(self):
         self.name = "Global"
+        self.parent = None
 
 class PyByteVM:
     def __init__(self, module=None, globals_object=None, parent=None):
@@ -43,6 +49,7 @@ class PyByteVM:
         self.var_contexts = {}
         # stores the default arguments when a function is made
         self.func_def_args = {}
+        self.builtin = False
 
     # Pushes co_consts[consti] onto the stack.
     def invoke_LOAD_CONST(self, val):
@@ -71,11 +78,26 @@ class PyByteVM:
                 self.context = context
                 break
             except AttributeError:
+                if context.parent is None:
+                    # Could be a builtin
+                    builtin = self.is_builtin(context, var_name)
+                    if builtin is True:
+                        self.builtin = True
+                        return var_name
                 context = context.parent
         self.var_contexts[var_name] = context
         if context is None:
-            print('huh')
+            print("Null context")
         return var_value
+
+    def is_builtin(self, context, var_name):
+        # first check in globals
+        try:
+            var_value = getattr(context.globals, var_name)
+            return var_value
+        except AttributeError:
+            # definitely a builtin
+            return True
 
     # Implements name = TOS. namei is the index of name in the attribute co_names of the code object.
     # TODO The compiler tries to use STORE_FAST or STORE_GLOBAL if possible.
@@ -143,6 +165,11 @@ class PyByteVM:
         posn_args.reverse()
         # Below the parameters, the template function object which will be used to create a new function object
         func_template = self.stack.pop()
+        # check if the func_template is a builtin
+        if self.builtin is True:
+            self.builtin = False
+            self.stack.append(self.invoke_builtins(func_template, posn_args, keyw_args))
+            return
         # the actual function object that will be invoked
         func_code = PyByteVM(func_template.module, func_template.globals)
         #  copy the default params from the template
@@ -156,6 +183,12 @@ class PyByteVM:
             self.set_in_exec_frame(func_code,func_code.varnames[i], item, func_call=True)
         # pushes the return value
         self.stack.append(func_code.execute())
+
+
+    def invoke_builtins(self, builtin_func_str, posn_args, keyw_args):
+        builtin_func = BUILTINS[builtin_func_str]
+        builtin_func(*posn_args)
+        return None
 
     # Returns with TOS to the caller of the function.
     def invoke_RETURN_VALUE(self):
@@ -218,7 +251,7 @@ class PyByteVM:
     def execute(self):
         while True:
             op_code = self.program[self.ip]
-            print(dis.opname[op_code], op_code)
+            # print(dis.opname[op_code], op_code)
             self.ip += 1
             if op_code >= dis.HAVE_ARGUMENT:
                 low = self.program[self.ip]
