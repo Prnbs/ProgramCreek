@@ -11,7 +11,8 @@ COMPARISION = [
 ]
 
 BUILTINS = {
-    "print" : print
+    "print" : print,
+    "range" : range
 }
 
 
@@ -50,6 +51,36 @@ class PyByteVM:
         # stores the default arguments when a function is made
         self.func_def_args = {}
         self.builtin = False
+
+    # Replaces TOS with getattr(TOS, co_names[namei])
+    def invoke_LOAD_ATTR(self, val):
+        tos = self.stack.pop()
+        attrib = getattr(tos, self.names[val])
+        self.stack.append(attrib)
+        self.builtin = True
+
+    #Implements TOS = iter(TOS).
+    def invoke_GET_ITER(self):
+        tos = self.stack.pop()
+        self.stack.append(iter(tos))
+
+    # Works as BUILD_TUPLE, but creates a list.
+    def invoke_BUILD_LIST(self, val):
+        if val == 0:
+            empty_list = []
+            self.stack.append(empty_list)
+
+    # TOS is an iterator. Call its next() method. If this yields a new value, push it on
+    # the stack (leaving the iterator below it). If the iterator indicates it is exhausted
+    # TOS is popped, and the bytecode counter is incremented by delta.
+    def invoke_FOR_ITER(self, val):
+        tos = self.stack.pop()
+        try:
+            next_item = next(tos)
+            self.stack.append(tos)
+            self.stack.append(next_item)
+        except StopIteration:
+            self.ip += val
 
     # Pushes co_consts[consti] onto the stack.
     def invoke_LOAD_CONST(self, val):
@@ -168,7 +199,11 @@ class PyByteVM:
         # check if the func_template is a builtin
         if self.builtin is True:
             self.builtin = False
-            self.stack.append(self.invoke_builtins(func_template, posn_args, keyw_args))
+            # check if it's a callable attribute method eg. append() on list
+            if callable(func_template):
+                self.stack.append(func_template(*posn_args))
+            else:
+                self.stack.append(self.invoke_builtins(func_template, posn_args, keyw_args))
             return
         # the actual function object that will be invoked
         func_code = PyByteVM(func_template.module, func_template.globals)
@@ -187,8 +222,7 @@ class PyByteVM:
 
     def invoke_builtins(self, builtin_func_str, posn_args, keyw_args):
         builtin_func = BUILTINS[builtin_func_str]
-        builtin_func(*posn_args)
-        return None
+        return builtin_func(*posn_args)
 
     # Returns with TOS to the caller of the function.
     def invoke_RETURN_VALUE(self):

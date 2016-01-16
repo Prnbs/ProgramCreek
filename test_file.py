@@ -36,18 +36,26 @@
 # print(a,b, c, d)
 
 ####### 3
-def fact(n):
-    if n <= 1:
-        return 1
-    else:
-        return n * fact(n-1)
-#
-a = fact(5)
-print(a)
+# def fact(n):
+#     if n <= 1:
+#         return 1
+#     else:
+#         return n * fact(n-1)
+# #
+# a = fact(5)
+# print(a)
 ####### 4
 # a = 1
 # print(a)
 
+####### 5
+
+a = []
+for i in range(6):
+    a.append(i)
+
+
+print(a)
 
 
 
