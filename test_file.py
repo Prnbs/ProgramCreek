@@ -1,3 +1,5 @@
+a = 124
+print(a)
 ######## 1
 
 # def some_func(a=9, b=5):
@@ -50,12 +52,12 @@
 
 ####### 5
 
-a = []
-for i in range(6):
-    a.append(i)
-
-
-print(a)
+# a = []
+# for i in range(6):
+#     a.append(i)
+#
+#
+# print(a)
 
 
 
