@@ -68,13 +68,13 @@ class NFA:
                 expr = AST.pop()
                 AST.append(Plus(expr))
             elif ch is '.':
-                if len(AST) >= 2:
-                    right = AST.pop()
-                    left = AST.pop()
-                    AST.append(Concat(left, right))
-                else:
-                    left = AST.pop()
-                    AST.append(Concat(left, ""))
+                right = AST.pop()
+                left = AST.pop()
+                AST.append(Concat(left, right))
+            elif ch is '|':
+                right = AST.pop()
+                left = AST.pop()
+                AST.append(Or(left, right))
             else:
                 AST.append(Literal(ch))
 
@@ -90,6 +90,9 @@ class NFA:
             split = Split(self.AST_2_NFA(ast.expr, placeholder), and_then)
             placeholder.pointing_to = split
             return placeholder
+        elif isinstance(ast, Or):
+            split = Split(self.AST_2_NFA(ast.left, and_then), self.AST_2_NFA(ast.right, and_then))
+            return split
         elif isinstance(ast, Plus):
             return self.AST_2_NFA(Concat(ast.expr, Repeat(ast.expr)), and_then)
         else:
@@ -99,7 +102,7 @@ class NFA:
     def evaluate_NFA(self, curr_state, string_to_match):
         if isinstance(curr_state, Consume):
             if len(string_to_match) == 0:
-                return True
+                return False
             if string_to_match[0] != curr_state.to_consume:
                 return False
             return self.evaluate_NFA(curr_state.out, string_to_match[1:])
@@ -107,22 +110,25 @@ class NFA:
             return self.evaluate_NFA(curr_state.pointing_to, string_to_match)
         elif isinstance(curr_state, Split):
             lhs = self.evaluate_NFA(curr_state.out1, string_to_match)
-            rhs = lhs & self.evaluate_NFA(curr_state.out2, string_to_match)
-            return rhs
+            rhs = self.evaluate_NFA(curr_state.out2, string_to_match)
+            return rhs | lhs
         elif isinstance(curr_state, Match):
-            return True
+            if len(string_to_match) > 0:
+                return False
+            else:
+                return True
 
 
 if __name__ == '__main__':
     obj = PostFix()
-    input = "a*b+"
+    input = "a+|b*"
     str = obj.append_concat(input[1:], input[0])
     postFix = obj.in2post(str)
     print("Postfixed", postFix)
     ndfa = NFA()
-    nfa = ndfa.postfix_2_AST("a*b.")
+    nfa = ndfa.postfix_2_AST("a+b*|")
     state = ndfa.AST_2_NFA(nfa, Match())
-    result = ndfa.evaluate_NFA(state, "aaaaaaaaab")
+    result = ndfa.evaluate_NFA(state, "")
     print(result)
 
 
