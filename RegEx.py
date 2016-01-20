@@ -57,7 +57,7 @@ class PostFix:
         Recursive function that decides where to put the . operator for concat
         :param input: at each recursive call the input size reduces by input[1:]
         :param result: at each recursive call result size increases by result += input[0]
-        :param num_operands: number of operators seen so far, is equal to 1 then . will never be placed
+        :param num_operands: number of operators seen so far, if equal to 1 then . will never be placed
         :param prev_operator: is prev_operator was a binary operator then . won't be placed
         :return:
         """
