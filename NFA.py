@@ -1,5 +1,6 @@
 from RegEx import PostFix
 
+
 class RegExpr:
     pass
 
@@ -59,6 +60,11 @@ class Placeholder(State):
 class NFA:
 
     def postfix_2_AST(self, postfix_input):
+        """
+        Converts the input from post fix notation to an AST
+        :param postfix_input:
+        :return:
+        """
         AST = []
         for ch in postfix_input:
             if ch is '*':
@@ -81,6 +87,12 @@ class NFA:
         return AST.pop()
 
     def AST_2_NFA(self, ast, and_then):
+        """
+        Converts the AST to an NFA
+        :param ast:
+        :param and_then:
+        :return:
+        """
         if isinstance(ast, Literal):
             return Consume(ast.literal, and_then)
         elif isinstance(ast, Concat):
@@ -96,10 +108,15 @@ class NFA:
         elif isinstance(ast, Plus):
             return self.AST_2_NFA(Concat(ast.expr, Repeat(ast.expr)), and_then)
         else:
-            # empty right side from concat
             return Consume("", and_then)
 
     def evaluate_NFA(self, curr_state, string_to_match):
+        """
+        Runs the string_to_match on the NFA to see if it can reach the Match state
+        :param curr_state:
+        :param string_to_match:
+        :return:
+        """
         if isinstance(curr_state, Consume):
             if len(string_to_match) == 0:
                 return False
@@ -126,9 +143,9 @@ if __name__ == '__main__':
     postFix = obj.in2post(str)
     print("Postfixed", postFix)
     ndfa = NFA()
-    nfa = ndfa.postfix_2_AST("a+b*|")
+    nfa = ndfa.postfix_2_AST(postFix)
     state = ndfa.AST_2_NFA(nfa, Match())
-    result = ndfa.evaluate_NFA(state, "")
+    result = ndfa.evaluate_NFA(state, "ab")
     print(result)
 
 
