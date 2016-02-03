@@ -70,6 +70,7 @@ def merge(head_one, head_two):
     head_one.next = head_two
     head_one = head_one.next
 
+    # append the rest if it exists
     if head_one_next is not None:
         head_one.next = head_one_next
     elif head_two_next is not None:
