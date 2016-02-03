@@ -1,5 +1,7 @@
-a = 124
-print(a)
+a = 128
+b = 256
+c = a + b
+print(c)
 ######## 1
 
 # def some_func(a=9, b=5):
