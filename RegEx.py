@@ -72,7 +72,7 @@ class PostFix:
             num_operands += 1
         if num_operands > 1 and not head_is_bi_operator and head_is_operator and not head_is_parenthesis \
                 and not prev_operator_was_bi:
-            temp_result += '.'
+            temp_result += '`'
         if head_is_operator:
             prev_operator = input[0]
         return self.append_concat_recursive(input[1:], temp_result, num_operands, prev_operator)
@@ -92,7 +92,7 @@ class PostFix:
 
 if __name__ == '__main__':
     post_fix = PostFix()
-    input = "a*b+"
+    input = "a*|b+"
     appended = post_fix.append_concat(input[1:], input[0])
     print(appended)
-    print(post_fix.in2post(appended))
+    # print(post_fix.in2post(appended))

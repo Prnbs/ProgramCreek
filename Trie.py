@@ -61,4 +61,4 @@ if __name__ == '__main__':
         trie.add_word(word)
     str_prefix = "blacksm"
     l_all_words = trie.find_all_words(str_prefix, trie.root, [], "")
-    print l_all_words
+    print (l_all_words)

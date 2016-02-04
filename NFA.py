@@ -1,33 +1,33 @@
 from RegEx import PostFix
 
 
-class RegExpr:
+class AST:
     pass
 
 
-class Literal(RegExpr):
+class Literal(AST):
     def __init__(self, lit):
         self.literal = lit
 
 
-class Or(RegExpr):
+class Or(AST):
     def __init__(self, left, right):
         self.left = left
         self.right = right
 
 
-class Concat(RegExpr):
+class Concat(AST):
     def __init__(self, left, right):
         self.left = left
         self.right = right
 
 
-class Repeat(RegExpr):
+class Repeat(AST):
     def __init__(self, expr):
         self.expr = expr
 
 
-class Plus(RegExpr):
+class Plus(AST):
     def __init__(self, expr):
         self.expr = expr
 
@@ -73,7 +73,7 @@ class NFA:
             elif ch is '+':
                 expr = AST.pop()
                 AST.append(Plus(expr))
-            elif ch is '.':
+            elif ch is '`':
                 right = AST.pop()
                 left = AST.pop()
                 AST.append(Concat(left, right))
@@ -138,14 +138,14 @@ class NFA:
 
 if __name__ == '__main__':
     obj = PostFix()
-    input = "a+|b*"
+    input = "ab*"
     str = obj.append_concat(input[1:], input[0])
     postFix = obj.in2post(str)
     print("Postfixed", postFix)
     ndfa = NFA()
     nfa = ndfa.postfix_2_AST(postFix)
     state = ndfa.AST_2_NFA(nfa, Match())
-    result = ndfa.evaluate_NFA(state, "ab")
+    result = ndfa.evaluate_NFA(state, "abb")
     print(result)
 
 

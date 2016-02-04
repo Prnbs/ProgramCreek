@@ -1,5 +1,3 @@
-__author__ = 'psinha4'
-
 
 class HashNode:
     def __init__(self, key, value):
@@ -100,7 +98,7 @@ if __name__ == '__main__':
     hashmap.put("word", 3)
     hashmap.put("wrod", 5)
     hashmap.put("owrd", 6)
-    print hashmap.get("owrds")
-    print hashmap.delete("ordw")
+    print (hashmap.get("owrds"))
+    print (hashmap.delete("word"))
 
 
