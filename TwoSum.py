@@ -4,16 +4,16 @@ def two_sum(arr, target):
     dict = {}
     result = []
     for i, elem in enumerate(arr):
-        if dict.has_key(elem):
+        if elem in dict:
             result.append(dict[elem])
-            result.append(i)
+            result.append(elem)
             break
         else:
-            dict[target - elem] = i
+            dict[target - elem] = elem
     return result
 
 
-def two_sum_unsorted(arr, target):
+def two_sum_sorted(arr, target):
     j = len(arr) - 1
     i = 0
     while i < j:
@@ -23,14 +23,14 @@ def two_sum_unsorted(arr, target):
             j -= 1
         if target - arr[j] > arr[i]:
             i += 1
-    print "No solution"
+    print ("No solution")
 
 
 if __name__ == '__main__':
     arr = [8,3,6,2,4,9]
     res = two_sum(arr, 10)
-    print arr[res[0]], arr[res[1]]
+    print (res[0], res[1])
     arr.sort()
-    print arr
-    res = two_sum_unsorted(arr, 10)
-    print arr[res[0]], arr[res[1]]
+    print (arr)
+    res = two_sum_sorted(arr, 10)
+    print (arr[res[0]], arr[res[1]])
