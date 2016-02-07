@@ -18,6 +18,7 @@ def create_marsh(n, m, obstacles):
 
 def calculate_perimeter(n, m, marsh_vert, marsh_hori, obstacles):
     max_perimeter = 0
+    # start from bottom right
     for start_i in range(n-1, 0, -1):
         for start_j in range(m-1, 0, -1):
             if obstacles[start_i][start_j] is True:
@@ -28,40 +29,26 @@ def calculate_perimeter(n, m, marsh_vert, marsh_hori, obstacles):
             if up_stride == 0 or left_stride == 0:
                 continue
 
+            # calculate maximum left extent that is reachable
             top_left_i = start_i - up_stride
             top_left_j = start_j - left_stride
 
-            # keep up_stride constant and check all left strides
-            for j in range(top_left_j, start_j):
-                if obstacles[top_left_i][j] is True:
-                    continue
-                down_sweep = marsh_vert[start_i][j]
-                if down_sweep >= marsh_vert[start_i][start_j]:
-                    # once down sweep works check for left sweep
-                    left_sweep = marsh_hori[top_left_i][start_j] - marsh_hori[top_left_i][j]
-                    if left_sweep >= (start_j - j):
-                        # max rect in left sweep found
-                        l = start_j - j
-                        b = min(down_sweep, marsh_vert[start_i][start_j])
-                        perimeter = 2 * (l + b)
-                        max_perimeter = max(max_perimeter, perimeter)
-                        break
-
-            # keep left_stride consatnt and check all up strides
             for i in range(top_left_i, start_i):
-                if obstacles[i][top_left_j] is True:
-                    continue
-                down_sweep = marsh_vert[start_i][top_left_j]
-                if down_sweep >= start_i - i:
-                    # once down sweep works check for left sweep
-                    left_sweep = marsh_hori[i][start_j]
-                    if left_sweep >= start_j - top_left_j:
-                        # max rect in left sweep found
-                        l = start_j - top_left_j
-                        b = start_i - i
-                        perimeter = 2 * (l + b)
-                        max_perimeter = max(max_perimeter, perimeter)
-                        break
+                # keep up_stride constant and check all left strides
+                for j in range(top_left_j, start_j):
+                    if obstacles[i][j] is True:
+                        continue
+                    down_sweep = marsh_vert[start_i][j]
+                    if down_sweep >= start_i - i:
+                        # once down sweep works check for left sweep
+                        left_sweep = marsh_hori[i][start_j] - marsh_hori[i][j]
+                        if left_sweep >= (start_j - j):
+                            # max rect in left sweep found
+                            l = start_j - j
+                            b = start_i - i
+                            perimeter = 2 * (l + b)
+                            max_perimeter = max(max_perimeter, perimeter)
+                            break
 
     return max_perimeter
 
@@ -71,7 +58,7 @@ if __name__ == '__main__':
     obstacles = [[] for x in range(n)]
     for i in range(n):
        line = str(input())
-       obstacles[i].extend([True if x == 'x' else False for x in line])
+       obstacles[i].extend([True if x is 'x' else False for x in line])
 
     hori, vert = create_marsh(n, m,obstacles)
 
