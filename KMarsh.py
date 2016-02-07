@@ -1,46 +1,82 @@
-class KMarch:
-    def __init__(self, N, M):
-        self.N = N
-        self.M = M
-        self.Matrix = []
-        self.perimeter = [[0 for x in range(M)] for y in range(N)]
+def create_marsh(n, m, obstacles):
+    marsh_vert = [[0 for x in range(m)] for x in range(n)]
+    marsh_hori = [[0 for x in range(m)] for x in range(n)]
 
-    def create_marsh(self):
-        # set x, y as initial points
-        for X in range(self.M):
-            for Y in range(self.N):
-                # initialize row X
-                self.perimeter[X][Y] = 0
-                for x in range(X+1, self.M):
-                    if self.Matrix[Y][x] == '.':
-                        self.perimeter[Y][x] = self.perimeter[Y][x-1] + 1
-                    else:
-                        self.perimeter[Y][x] = -1
-                # initialize column Y
-                for y in range(Y+1, self.N):
-                    if self.Matrix[y][X] == '.':
-                        self.perimeter[y][X] = self.perimeter[y-1][X] + 1
-                    else:
-                        self.perimeter[y][X] = -1
-                # set other end of rectangle
-                for y in range(Y+1, self.N):
-                    for x in range(X+1, self.M):
-                        if self.Matrix[x-1][y] == '.' and self.Matrix[x][y-1] == '.':
-                            # special case of 1
-                            if self.perimeter[x-1][y] == 1 and self.perimeter[x][y-1] == 1:
-                                self.perimeter[x][y] = 4
-                            elif self.perimeter[x-1][y] != -1 and self.perimeter[x][y-1] != -1:
-                                self.perimeter[x][y] = 2 + max(self.perimeter[x-1][y], self.perimeter[x][y-1])
-                            else:
-                                self.perimeter[x][y] = -1
-                        else:
-                            self.perimeter[x][y] = -1
+    for i in range(n):
+        for j in range(m):
+            if obstacles[i][j] is False:
+                if j > 0:
+                    marsh_hori[i][j] = marsh_hori[i][j-1] + 1
+                if i > 0:
+                    marsh_vert[i][j] = marsh_vert[i-1][j] + 1
+            else:
+                marsh_vert[i][j] = -1
+                marsh_hori[i][j] = -1
+
+    return marsh_hori, marsh_vert
+
+
+def calculate_perimeter(n, m, marsh_vert, marsh_hori, obstacles):
+    max_perimeter = 0
+    for start_i in range(n-1, 0, -1):
+        for start_j in range(m-1, 0, -1):
+            if obstacles[start_i][start_j] is True:
+                continue
+            up_stride = marsh_vert[start_i][start_j]
+            left_stride = marsh_hori[start_i][start_j]
+
+            if up_stride == 0 or left_stride == 0:
+                continue
+
+            top_left_i = start_i - up_stride
+            top_left_j = start_j - left_stride
+
+            # keep up_stride constant and check all left strides
+            for j in range(top_left_j, start_j):
+                if obstacles[top_left_i][j] is True:
+                    continue
+                down_sweep = marsh_vert[start_i][j]
+                if down_sweep >= marsh_vert[start_i][start_j]:
+                    # once down sweep works check for left sweep
+                    left_sweep = marsh_hori[top_left_i][start_j] - marsh_hori[top_left_i][j]
+                    if left_sweep >= (start_j - j):
+                        # max rect in left sweep found
+                        l = start_j - j
+                        b = min(down_sweep, marsh_vert[start_i][start_j])
+                        perimeter = 2 * (l + b)
+                        max_perimeter = max(max_perimeter, perimeter)
+                        break
+
+            # keep left_stride consatnt and check all up strides
+            for i in range(top_left_i, start_i):
+                if obstacles[i][top_left_j] is True:
+                    continue
+                down_sweep = marsh_vert[start_i][top_left_j]
+                if down_sweep >= start_i - i:
+                    # once down sweep works check for left sweep
+                    left_sweep = marsh_hori[i][start_j]
+                    if left_sweep >= start_j - top_left_j:
+                        # max rect in left sweep found
+                        l = start_j - top_left_j
+                        b = start_i - i
+                        perimeter = 2 * (l + b)
+                        max_perimeter = max(max_perimeter, perimeter)
+                        break
+
+    return max_perimeter
 
 
 if __name__ == '__main__':
-    [N, M] = map(int, input().strip().split())
-    marsh = KMarch(N, M)
-    for i in range(N):
-        marsh.Matrix.extend(input().strip().split())
-    marsh.create_marsh()
-    print(marsh.perimeter)
+    [n, m] = [int(x) for x in input().split()]
+    obstacles = [[] for x in range(n)]
+    for i in range(n):
+       line = str(input())
+       obstacles[i].extend([True if x == 'x' else False for x in line])
+
+    hori, vert = create_marsh(n, m,obstacles)
+
+    max_perimeter = calculate_perimeter(n, m, vert, hori, obstacles)
+    if max_perimeter == 0:
+        print("impossible")
+    else:
+        print (max_perimeter)
