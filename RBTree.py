@@ -18,7 +18,6 @@ class RBNode:
     #     self.root.self_location = thisNode.self_location
     #     self.root
 
-
     __repr__ = __str__
 
 
@@ -139,8 +138,8 @@ class RBTree:
         if direction is -1:
             return
         while inserted_at is not None and inserted_at.self_location is not -1 and inserted_at.colour is "R":
-            print "Parent:", inserted_at
-            print "     Node:",  inserted_at.children[direction]
+            print ("Parent:", inserted_at)
+            print ("     Node:",  inserted_at.children[direction])
             # inserted_at is the parent of node just inserted
             if inserted_at.parent is not None and inserted_at.parent.colour is "R":
                 parent = inserted_at.parent
@@ -203,9 +202,9 @@ if __name__ == '__main__':
 
     for data in list_of_items:
         rbTree.insert(data, rbTree.root)
-        print data
+        print (data)
 
-    print "end"
+    print ("end")
 
 
 

@@ -49,6 +49,7 @@ def compute_changes(memo, string_input, string_target):
     return operations
 
 
+
 def calculate_edit_distance(string_input, string_target):
     width = len(string_target)
     height = len(string_input)

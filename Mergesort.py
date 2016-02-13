@@ -15,8 +15,8 @@ def mergesort(arr):
         left_end = (size - 1) / 2
         right_start = (size + 1) / 2
 
-    left_arr = mergesort(arr[0:left_end+1])
-    right_arr = mergesort(arr[right_start:])
+    left_arr = mergesort(arr[0:int(left_end+1)])
+    right_arr = mergesort(arr[int(right_start):])
 
     i = j = 0
     result = []
@@ -91,10 +91,10 @@ if __name__ == '__main__':
         # print "Timsort", (t3-t2)
 
     np_mergesort_time = np.array(mergesort_time)
-    print "Avg mergesort time:", np_mergesort_time.mean()
+    print ("Avg mergesort time:", np_mergesort_time.mean())
 
     np_quicksort_time = np.array(quicksort_time)
-    print "Avg quicksort time:", np_quicksort_time.mean()
+    print ("Avg quicksort time:", np_quicksort_time.mean())
 
     np_timsort_time = np.array(timsort_time)
-    print "Avg timsort time:", np_timsort_time.mean()
+    print ("Avg timsort time:", np_timsort_time.mean())
